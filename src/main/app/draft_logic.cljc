@@ -1,5 +1,39 @@
 (ns app.draft-logic)
 
+(def a 1)
+(def b 2)
+
+(def state (atom 0))
+
+(deref state)
+@state
+
+;;  state [ ]----> 0
+
+(reset! state 4)
+;;  state [ ]----> 4
+
+;;  state [ ]----> 4 -> FN -> NEW VALUE
+(swap! state (fn [old-value] 8))
+(reset! state 8)
+
+(def draft-state (atom {:selected-champion nil
+                        :champion-list     []}))
+
+@draft-state
+
+(defn pick-champion [c]
+  (swap! draft-state (fn [old] (assoc old :selected-champion c))))
+
+(pick-champion "Foo")
+
+(comment
+
+  (swap! draft-state (fn [old]
+                       (update-in old ["Aatrox" :role] (fn [old-role] (conj old-role "mid")))
+                       ))
+  (add-watch draft-state :make-up (fn [k a old new]
+                                    (println "The atom changed "))))
 
 
 
@@ -51,8 +85,6 @@
               :direction ["forward" "hold"]
               :range     "ranged"}}
   )
-#
-\\
 
 ;; Add another  value to  one of the elements in  the champion list
 
