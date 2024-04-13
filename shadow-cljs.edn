@@ -11,6 +11,15 @@
                               :http-root          "resources/public"
                               :preloads           [com.fulcrologic.fulcro.inspect.preload app.development-preload]}}
 
+          :demo {:target     :browser
+                 :output-dir "resources/public/js/demo"
+                 :asset-path "/js/demo"
+
+                 :modules    {:demo {:init-fn app.demo/init}}
+                 :devtools   {:after-load         app.demo/refresh
+                              :http-port          8081
+                              :http-resource-root "public"
+                              :http-root          "resources/public"}}
           :test {:target           :browser-test
                  :test-dir         "resources/public/js/test"
                  :ns-regexp        "-test$"
