@@ -4,28 +4,129 @@
 (def b 2)
 
 (def state (atom 0))
+;; atom = mutable
+;; atom with an initial value of 0 named 'state'
+;; state [ ]----> 0
+
 
 (deref state)
+;; deref = dereferences the state atom = returning its current value without changing it
 @state
+;; does the same as (deref state)
 
-;;  state [ ]----> 0
 
+;; 2 operations:
+;; 1) reset its value
 (reset! state 4)
 ;;  state [ ]----> 4
 
-;;  state [ ]----> 4 -> FN -> NEW VALUE
-(swap! state (fn [old-value] 8))
-(reset! state 8)
 
-(def draft-state (atom {:selected-champion nil
-                        :champion-list     []}))
+;; 2) swap its value
+;;  state [ ]----> 4 -> FN -> NEW VALUE
+(swap! state (fn [old-value] (inc old-value)))
+(swap! state (fn [old-value] 8))
+(reset! state 8)                                            ; this gives the same answer as the one above - you are just replacing
+
+;;------------------------------------------------------------------------------
+;; Add 'Ali' as a common alternative way of typing in Alistar into the search bar
+
+(def draft-state (atom {"Aatrox"  {:name      "Aatrox"
+                                    :role      ["top"]
+                                    :class     "juggernaut"
+                                    :direction "forward"
+                                    :range     "melee"}
+                         "Ahri"    {:name      "Ahri"
+                                    :role      ["mid"]
+                                    :class     ["assassin" "utility"]
+                                    :direction "pick"
+                                    :range     "ranged"}
+                         "Alistar" {:name      ["Alistar"]      ; have to change this into a vector for this to work
+                                    :role      ["support"]      ; with the swap function written as is
+                                    :class     "tank"
+                                    :direction ["forward" "backward" "hold"]
+                                    :range     "melee"}
+                         "Annie"   {:name      "Annie"
+                                    :role      ["mid" "support" "top"]
+                                    :class     ["assassin" "utility"]
+                                    :direction ["forward" "hold"]
+                                    :range     "ranged"}}))
 
 @draft-state
 
-(defn pick-champion [c]
+(swap! draft-state (fn [old]
+                     (update-in old ["Alistar" :name] conj "Ali")
+                     ))
+
+
+;;------------------------------------------------------------------------------
+;; Add 'Ali' as a common alternative way of typing in Alistar into the search bar
+;; WITHOUT changing Alistar into a vector
+
+;;'update-in' only works with nested data structures
+;; no can do
+
+;;------------------------------------------------------------------------------
+
+
+                     (def draft-state (atom {:selected-champion nil
+                        :champion-list     [{"Aatrox"  {:name      "Aatrox"
+                                                        :role      ["top"]
+                                                        :class     "juggernaut"
+                                                        :direction "forward"
+                                                        :range     "melee"}
+                                             "Ahri"    {:name      "Ahri"
+                                                        :role      ["mid"]
+                                                        :class     ["assassin" "utility"]
+                                                        :direction "pick"
+                                                        :range     "ranged"}
+                                             "Akali"   {:name      "Akali"
+                                                        :role      ["mid" "top"]
+                                                        :class     "assassin"
+                                                        :direction "pick"
+                                                        :range     "melee"}
+                                             "Akshan"  {:name      "Akshan"
+                                                        :role      ["mid" "top"]
+                                                        :class     "assassin"
+                                                        :direction "pick"
+                                                        :range     "ranged"}
+                                             "Alistar" {:name      "Alistar"
+                                                        :role      ["support"]
+                                                        :class     "tank"
+                                                        :direction ["forward" "backward" "hold"]
+                                                        :range     "melee"}
+                                             "Amumu"   {:name      "Amumu"
+                                                        :role      ["jungle" "support" "top"]
+                                                        :class     "tank"
+                                                        :direction ["forward" "backward" "hold"]
+                                                        :range     "melee"}
+                                             "Anivia"  {:name      "Anivia"
+                                                        :role      ["mid" "support"]
+                                                        :class     "control mage"
+                                                        :direction "hold"
+                                                        :range     "ranged"}
+                                             "Annie"   {:name      "Annie"
+                                                        :role      ["mid" "support" "top"]
+                                                        :class     ["assassin" "utility"]
+                                                        :direction ["forward" "hold"]
+                                                        :range     "ranged"}}]}))
+
+@draft-state
+
+(defn red-pick-champion [c]
   (swap! draft-state (fn [old] (assoc old :selected-champion c))))
 
-(pick-champion "Foo")
+(red-pick-champion "Ahri")
+
+
+
+
+
+
+
+
+
+;;------------------------------------------------------------------------------
+
 
 (comment
 
@@ -34,6 +135,18 @@
                        ))
   (add-watch draft-state :make-up (fn [k a old new]
                                     (println "The atom changed "))))
+
+
+(defn pick-champion "Ahri"
+  (swap! draft-state (fn [old] (assoc old :name "Ahri"))))
+
+
+
+
+
+
+
+
 
 
 
