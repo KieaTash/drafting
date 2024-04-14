@@ -5,22 +5,22 @@
     [clojure.pprint :refer [pprint]]))
 
 (defonce state (atom {:count1 0
-                      :champion [{{:name "Aatrox"
-                                   :class "Bruiser"}
-                                  {:name "Ahri"
-                                   :class "Utility Assassin"}
-                                  {:name "Akali"
-                                   :class "Assassin"}
-                                  {:name "Akshan"
-                                   :class "Assassin"}
-                                  {:name "Alistar"
-                                   :class "Tank"}
-                                  {:name "Amumu"
-                                   :class "Tank"}
-                                  {:name "Anivia"
-                                   :class "Control Mage"}
-                                  {:name "Annie"
-                                   :class "Burst Utility Mage"}}]}))
+                      :champion [{:name "Annie"
+                                  :class "Burst Utility Mage"}
+                                 {:name "Alistar"
+                                  :class "Tank"}
+                                 {:name "Anivia"
+                                  :class "Control Mage"}
+                                 {:name "Ahri"
+                                  :class "Utility Assassin"}
+                                 {:name "Akshan"
+                                  :class "Assassin"}
+                                 {:name "Akali"
+                                  :class "Assassin"}
+                                 {:name "Amumu"
+                                  :class "Assassin"}
+                                 {:name "Aatrox"
+                                  :class "Bruiser"}]}))
 
 (defn ui-app-state [current-state]
   ;; HTM
@@ -53,9 +53,12 @@
         {:onClick (fn [_]
                     (swap! state update :champion #(sort-by :name %)))}
         (str "Name Sort:"))
-
-
-
+      (dom/button
+        {:onClick (fn [_]
+                    (swap! state update :champion #(sort-by (juxt :class :name) %)))}
+         (str "Alphabetical Class Sort"))
+      ;; 'juxt' creates a function that returns a vector containing the values of :class and :name for each champion
+      ;; the function is pasted to 'sort-by' which sorts the champions based on this vector
       (map
         (fn [champion]
           (dom/div {} (get champion :name)))
@@ -63,6 +66,19 @@
       (ui-app-state current-state))))
 
 
+;; THIS ALSO WORKS - but uses threading
+;;                    (swap! state update :champion #(sort-by (fn [champion] [(-> champion :class) (-> champion :name)]) %)))}
+;;        (str "Alphabetical Class Sort"))
+;; this extracts the values of ':class' and 'name' using the '->' threading macro and constructs a vector with these values
+;; this function is passed to 'sort-by' for sorting
+
+
+
+
+;;sort-by takes a function
+;; that function will recieve each item and it's supposed to return a kay by which they will be sorted
+;; vectors will sort based on the order of their first elements, and then their second elements
+;;if you tell sort by to use a function that returns a vector whose first member is the class, and the second member is the name then it should work
 
 
 ;; HTML: <button onClick=... >Label</button>
