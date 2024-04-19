@@ -37,20 +37,6 @@
     (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center.p-10 col2)
     (dom/div :.w-48.flex.items-center.justify-center.text-center.p-8.mr-20 col3)))
 
-
-
-(defn ui-pick-list [picks]
-  (dom/div
-    :.flex-col.w-100
-    (mapv
-      (fn [champion]
-        (dom/div :.w-20.h-20.bg-gray-300.mb-4.ml-10 {}
-          (dom/img {:src "https://via.placeholder.com/100"})))
-      picks)))
-
-
-
-
 (defn ui-ban-list [bans]
   (dom/div
     :.flex {}
@@ -60,6 +46,20 @@
           (dom/img {:src "https://via.placeholder.com/48"})))
       bans)))
 
+(defn ui-body-layout [col1 col2 col3]
+  (dom/div
+    (dom/div :.flex.items-center col1)
+    (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center.p-10 col2)
+    (dom/div :.flex.items-center col3)))
+
+(defn ui-pick-list [picks]
+  (dom/div
+    :.flex-col {}
+    (mapv
+      (fn [champion]
+        (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10 {}
+          (dom/img {:src "https://via.placeholder.com/100"})))
+      picks)))
 
 
 (defn ui-app-state [current-state]
@@ -94,12 +94,13 @@
           (ui-ban-list ["A" "B" "C" "D" "E"])))
       (dom/div
         (dom/div {:style {:color "blue"}}
-          (dom/div "Picks")
-          (ui-pick-list ["1" "2" "3" "4" "5"])))
-      (dom/div
-        (dom/div {:style {:color "red" :flex-grow 20 :m1-auto true}}
-          (dom/div "Picks")
-          (ui-pick-list ["1" "2" "3" "4" "5"])))
+          (dom/div "Team A Picks")
+          (ui-pick-list ["1" "2" "3" "4" "5"]))
+        (dom/div "Champion List")
+        (dom/div "Team B Picks")
+        (ui-pick-list ["1" "2" "3" "4" "5"]))
+
+
 
 
       (dom/div {:style {:color "yellow"}}
