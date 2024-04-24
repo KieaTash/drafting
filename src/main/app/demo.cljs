@@ -48,17 +48,19 @@
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
-    (dom/div :.flex.items-center col1)
-    (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center.p-10 col2)
-    (dom/div :.flex.items-center col3)))
+    :.flex {:style {:width "100%" :overflow "wrap"}}
+    (dom/div :.flex.items-center.p-8 col1)
+    (dom/div :.flex-1.flex-wrap.flex-start col2)
+    (dom/div :.flex.items-center.p-8 col3)))
 
 (defn ui-pick-list [picks]
   (dom/div
     :.flex-col {}
     (mapv
       (fn [champion]
-        (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10 {}
-          (dom/img {:src "https://via.placeholder.com/100"})))
+        (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
+          (dom/img {:src "https://via.placeholder.com/100"
+                    :style {:width "100%" :height "100%"}})))
       picks)))
 
 
@@ -92,13 +94,14 @@
         (dom/div
           (dom/div "Team B")
           (ui-ban-list ["A" "B" "C" "D" "E"])))
-      (dom/div
+      (ui-body-layout
         (dom/div {:style {:color "blue"}}
           (dom/div "Team A Picks")
           (ui-pick-list ["1" "2" "3" "4" "5"]))
-        (dom/div "Champion List")
-        (dom/div "Team B Picks")
-        (ui-pick-list ["1" "2" "3" "4" "5"]))
+        (dom/div {:style {:height "0.9vh"}}
+          (mapv (fn [n] (dom/div :.flex {:style { :width "100px" :height "100px"}} "X")) (range 200)))
+        (dom/div "Team B Picks"
+          (ui-pick-list ["1" "2" "3" "4" "5"])))
 
 
 
