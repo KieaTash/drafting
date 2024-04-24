@@ -42,16 +42,17 @@
     :.flex {}
     (mapv
       (fn [champion]
-        (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10 {}
-          (dom/img {:src "https://via.placeholder.com/48"})))
+        (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
+          (dom/img {:src   "https://via.placeholder.com/48"
+                    :style {:width "100%" :height "100%"}})))
       bans)))
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
     :.flex {:style {:width "100%" :overflow "wrap"}}
-    (dom/div :.flex.items-center.p-8 col1)
-    (dom/div :.flex-1.flex-wrap.flex-start col2)
-    (dom/div :.flex.items-center.p-8 col3)))
+    (dom/div :.flex.items-top.ml-8 col1)
+    (dom/div :.flex.mt-28 col2)
+    (dom/div :.flex.items-top.mr-8.ml-1 col3)))
 
 (defn ui-pick-list [picks]
   (dom/div
@@ -59,10 +60,38 @@
     (mapv
       (fn [champion]
         (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
-          (dom/img {:src "https://via.placeholder.com/100"
+          (dom/img {:src   "https://via.placeholder.com/100"
                     :style {:width "100%" :height "100%"}})))
       picks)))
 
+(def scroll-styles
+  (dom/style {} "
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background-color: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #888;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background-color: #555;
+    }"))
+
+(defn ui-champion-list [list]
+  (dom/div
+    {:style {:max-height "calc(58vh)", ;; Adjust the max-height as needed
+             :overflow "auto"}}
+    (dom/div scroll-styles)
+    (dom/div
+    :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
+    (mapv
+      (fn [champion]
+        (dom/div :.w-16.h-16.bg-gray-200.m-4.rounded-lg
+          (dom/img {:src   "https://via.placeholder.com/64"
+                    :style {:width "100%" :height "100%"}})))
+      list))))
 
 (defn ui-app-state [current-state]
   ;; HTM
@@ -98,11 +127,12 @@
         (dom/div {:style {:color "blue"}}
           (dom/div "Team A Picks")
           (ui-pick-list ["1" "2" "3" "4" "5"]))
-        (dom/div {:style {:height "0.9vh"}}
-          (mapv (fn [n] (dom/div :.flex {:style { :width "100px" :height "100px"}} "X")) (range 200)))
-        (dom/div "Team B Picks"
+        (ui-champion-list
+          (mapv (fn [n] )
+            (range 200)))
+        (dom/div {:style {:color "red"}}
+          (dom/div "Team A Picks")
           (ui-pick-list ["1" "2" "3" "4" "5"])))
-
 
 
 
