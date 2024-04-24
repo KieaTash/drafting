@@ -1,41 +1,26 @@
-(ns app.demo
+(ns app.functional layout, no working logic)
   (:require
     [com.fulcrologic.fulcro.dom :as dom]
     ["react-dom" :as react.dom]
     [clojure.pprint :refer [pprint]]))
 
-
-(def champions [{:name  "Annie"
-                 :class "Burst Utility Mage"}
-                {:name  "Alistar"
-                 :class "Tank"}
-                {:name  "Anivia"
-                 :class "Control Mage"}
-                {:name  "Ahri"
-                 :class "Utility Assassin"}
-                {:name  "Akshan"
-                 :class "Assassin"}
-                {:name  "Akali"
-                 :class "Assassin"}
-                {:name  "Amumu"
-                 :class "Assassin"}
-                {:name  "Aatrox"
-                 :class "Bruiser"}])
-(def champions-by-name (zipmap (map :name champions) champions))
-
-(defonce state (atom {:selected  nil
-                      :champions champions-by-name}))
-
-(defn banned-champions [team]
-  (let [c-by-name (get @state champions)
-        all       (vals c-by-name)
-        banned    (filterv
-                    (fn [c]
-                      (and
-                        (= team (:team c))
-                        (contains? c :ban)))
-                    all)]
-    (sort-by :ban banned)))
+(defonce state (atom {:count1   0
+                      :champion [{:name  "Annie"
+                                  :class "Burst Utility Mage"}
+                                 {:name  "Alistar"
+                                  :class "Tank"}
+                                 {:name  "Anivia"
+                                  :class "Control Mage"}
+                                 {:name  "Ahri"
+                                  :class "Utility Assassin"}
+                                 {:name  "Akshan"
+                                  :class "Assassin"}
+                                 {:name  "Akali"
+                                  :class "Assassin"}
+                                 {:name  "Amumu"
+                                  :class "Assassin"}
+                                 {:name  "Aatrox"
+                                  :class "Bruiser"}]}))
 
 
 
@@ -99,8 +84,8 @@
 
 (defn ui-champion-list [list]
   (dom/div
-    {:style {:max-height "calc(58vh)",                      ;; Adjust the max-height as needed
-             :overflow   "auto"}}
+    {:style {:max-height "calc(58vh)", ;; Adjust the max-height as needed
+             :overflow "auto"}}
     (dom/div scroll-styles)
     (dom/div
       :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
@@ -125,74 +110,70 @@
         (pprint current-state)))
     (dom/hr)))
 
-(defn mark-champion [old name]
-  (assoc-in old [:champions name :used?] true))
 
-(defn clear-champion [old name]
-  (assoc-in old [:champions name :used?] false))
 
 
 
 (defn Root []
   (let [current-state @state
-        all           (vals (get @state :champions))
-        champions     (sort-by :name all)
-        selection     (get @state :selected)]
-    (dom/div
-      (mapv
-        (fn [c]
-          (let [nm (:name c)
-                used? (:used? c)]
-
-            (dom/div {:style   {:color (if :used?
-                                             "grey"
-                                         (if
-                                         (and selection (= nm selection))
-                                             "red" "yellow"))}
-                      :onClick (fn [] (when-not used?
-                                        (swap! state assoc :selected (:name c))))}
-              (get c :name))))
-        champions)
-
-      (map-indexed
-        (fn [idx c]
-          (dom/div {:onClick (fn []
-                               (let [current (get-in @state [:teamB :bans idx])
-                                     who     (get @state :selected)]
-                                 (if current
-                                   (do
-                                     (swap! state update-in [:teamB :bans] dissoc idx)
-                                     (swap! state clear-champion current))
-                                   (when who
-                                     (swap! state assoc-in [:teamB :bans idx] who)))))}
-            (str "B Banned:" (get-in @state [:teamB :bans idx]))))
-        (range 5))
+        current-count (get current-state :count1)]
+    (dom/div {}
+      (ui-header-layout
+        (dom/div
+          (dom/div "Team A")
+          (ui-ban-list ["A" "B" "C" "D" "E"]))
+        (dom/div "Time Remaining")
+        (dom/div
+          (dom/div "Team B")
+          (ui-ban-list ["A" "B" "C" "D" "E"])))
+      (ui-body-layout
+        (dom/div {:style {:color "blue"}}
+          (dom/div "Team A Picks")
+          (ui-pick-list ["1" "2" "3" "4" "5"]))
+        (ui-champion-list
+          (mapv (fn [n] )
+            (range 200)))
+        (dom/div {:style {:color "red"}}
+          (dom/div "Team A Picks")
+          (ui-pick-list ["1" "2" "3" "4" "5"])))
 
 
 
-
-      (dom/div {}
-        (ui-header-layout
-          (dom/div
-            (dom/div "Team A")
-
-            (ui-ban-list ["A" "B" "C" "D" "E"]))
-          (dom/div "Time Remaining")
-          (dom/div
-            (dom/div "Team B")
-            (ui-ban-list ["A" "B" "C" "D" "E"])))
-        (ui-body-layout
-          (dom/div {:style {:color "blue"}}
-            (dom/div "Team A Picks")
-            (ui-pick-list ["1" "2" "3" "4" "5"]))
-          (ui-champion-list
-            (mapv (fn [n])
-              (range 200)))
-          (dom/div {:style {:color "red"}}
-            (dom/div "Team A Picks")
-            (ui-pick-list ["1" "2" "3" "4" "5"])))
-
-
+      (dom/div {:style {:color "yellow"}}
+        "Champion Selected"
+        (ui-button
+          {:onClick (fn [_]
+                      (swap! state update :champion conj {:name (str "Champion" current-count)})
+                      (swap! state update :count1 inc)
+                      (swap! state update :button-color (fn [color] (if (= color "blue") "red" "blue"))))
+           :style   {:color (get @state :button-color)}}
+          (str "Clicked:" current-count))
+        (ui-button
+          {:onClick (fn [_]
+                      (swap! state update :champion #(sort-by :class %)))}
+          (str "Class Sort:"))
+        (ui-button
+          {:onClick (fn [_]
+                      (swap! state update :champion #(sort-by :name %)))}
+          (str "Name Sort:"))
+        (ui-button
+          {:onClick (fn [_]
+                      (swap! state update :champion #(sort-by (juxt :class :name) %)))}
+          (str "Alphabetical Class Sort"))
+        ;; 'juxt' creates a function that returns a vector containing the values of :class and :name for each champion
+        ;; the function is pasted to 'sort-by' which sorts the champions based on this vector
+        (map
+          (fn [champion]
+            (dom/div {:style   {:color       "yellow"
+                                :font-family "Verdana, sans-serif"}
+                      :onClick {:color       "black"
+                                :font-family "Verdana, sans-serif"}}
+              ;; not sure if this onclick styling actually does anything here
+              (dom/span {:style {:color "purple"}} (str "Name: " (get champion :name)))
+              " "                                           ;can include this to give a space between the two stylings
+              (dom/span {:style {:color "pink"}} (str "Class: " (get champion :class)))))
+          ; if the two dom/spans above are included then no need to specify the :color "green" earlier in dom/div
+          (get current-state :champion))
         (ui-app-state current-state)))))
 
 
