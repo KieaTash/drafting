@@ -51,7 +51,6 @@
   (dom/div
     :.flex
     (dom/div :.w-48.flex.items-center.justify-right.text-center.p-8.mr-20 col1)
-
     (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center.p-10 col2)
     (dom/div :.w-48.flex.items-center.justify-center.text-center.p-8.mr-20 col3)))
 
@@ -67,9 +66,9 @@
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
-    :.flex {:style {:width "100%"
+    :.flex {:style {:width           "100%"
                     :justify-content "space-between"
-                    :overflow "wrap"}}
+                    :overflow        "wrap"}}
     (dom/div :.flex.items-top.ml-8 col1)
     (dom/div :.flex.mt-28.flex-grow-1 col2)
     (dom/div :.flex.items-top.mr-8.ml-1 col3)))
@@ -109,14 +108,15 @@
       :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
       (mapv
         (fn [champion]
-          (let [nm      (get champion :name)
-                img-url (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")]
+          (let [nm        (get champion :name)
+                img-url   (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")
+                selected? (get @state [:selected nm] false)]
             (dom/div :.w-16.h-16.m-4
-              {:onClick (fn []
-
-                          )}
+              {:style   {:color (if selected? "grey" "black")}
+               :onClick (fn []
+                          (swap! state update-in [:selected nm] not))}
               (dom/img {:src   img-url                      ; "https://via.placeholder.com/64"
-                        :style {:width "100%" :height "100%"
+                        :style {:width         "100%" :height "100%"
                                 :border-radius "30%"}}))))
         list))))
 
@@ -148,34 +148,34 @@
         champions     (sort-by :name all)
         selection     (get @state :selected)]
     (dom/div
-      #_(mapv
-          (fn [c]
-            (let [nm    (:name c)
-                  used? (:used? c)]
+      (mapv
+        (fn [c]
+          (let [nm    (:name c)
+                used? (:used? c)]
 
-              (dom/div {:style   {:color (if :used?
-                                           "grey"
-                                           (if
-                                             (and selection (= nm selection))
-                                             "red" "yellow"))}
-                        :onClick (fn [] (when-not used?
-                                          (swap! state assoc :selected (:name c))))}
-                (get c :name))))
-          champions)
+            (dom/div {:style   {:color (if :used?
+                                         " "
+                                         (if
+                                           (and selection (= nm selection))
+                                           "red" "yellow"))}
+                      :onClick (fn [] (when-not used?
+                                        (swap! state assoc :selected (:name c))))}
+              (get c :name))))
+        champions)
 
-      #_(map-indexed
-          (fn [idx c]
-            (dom/div {:onClick (fn []
-                                 (let [current (get-in @state [:teamB :bans idx])
-                                       who     (get @state :selected)]
-                                   (if current
-                                     (do
-                                       (swap! state update-in [:teamB :bans] dissoc idx)
-                                       (swap! state clear-champion current))
-                                     (when who
-                                       (swap! state assoc-in [:teamB :bans idx] who)))))}
-              (str "B Banned:" (get-in @state [:teamB :bans idx]))))
-          (range 5))
+      (map-indexed
+        (fn [idx c]
+          (dom/div {:onClick (fn []
+                               (let [current (get-in @state [:teamB :bans idx])
+                                     who     (get @state :selected)]
+                                 (if current
+                                   (do
+                                     (swap! state update-in [:teamB :bans] dissoc idx)
+                                     (swap! state clear-champion current))
+                                   (when who
+                                     (swap! state assoc-in [:teamB :bans idx] who)))))}
+            (str "B Banned:" (get-in @state [:teamB :bans idx]))))
+        (range 5))
 
 
 
@@ -184,7 +184,6 @@
         (ui-header-layout
           (dom/div
             (dom/div "Team A")
-
             (ui-ban-list ["A" "B" "C" "D" "E"]))
           (dom/div "Time Remaining")
           (dom/div
