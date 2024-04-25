@@ -67,9 +67,11 @@
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
-    :.flex {:style {:width "100%" :overflow "wrap"}}
+    :.flex {:style {:width "100%"
+                    :justify-content "space-between"
+                    :overflow "wrap"}}
     (dom/div :.flex.items-top.ml-8 col1)
-    (dom/div :.flex.mt-28 col2)
+    (dom/div :.flex.mt-28.flex-grow-1 col2)
     (dom/div :.flex.items-top.mr-8.ml-1 col3)))
 
 (defn ui-pick-list [picks]
@@ -79,7 +81,8 @@
       (fn [champion]
         (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
           (dom/img {:src   "https://via.placeholder.com/100"
-                    :style {:width "100%" :height "100%"}})))
+                    :width 100
+                    })))
       picks)))
 
 (def scroll-styles
@@ -99,16 +102,22 @@
 
 (defn ui-champion-list [list]
   (dom/div
-    {:style {:max-height "calc(58vh)",                      ;; Adjust the max-height as needed
-             :overflow   "auto"}}
+    {:style {:maxHeight "calc(58vh)",                       ;; Adjust the max-height as needed
+             :overflow  "auto"}}
     (dom/div scroll-styles)
     (dom/div
       :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
       (mapv
         (fn [champion]
-          (dom/div :.w-16.h-16.bg-gray-200.m-4.rounded-lg
-            (dom/img {:src   "https://via.placeholder.com/64"
-                      :style {:width "100%" :height "100%"}})))
+          (let [nm      (get champion :name)
+                img-url (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")]
+            (dom/div :.w-16.h-16.m-4
+              {:onClick (fn []
+
+                          )}
+              (dom/img {:src   img-url                      ; "https://via.placeholder.com/64"
+                        :style {:width "100%" :height "100%"
+                                :border-radius "30%"}}))))
         list))))
 
 (defn ui-app-state [current-state]
@@ -139,34 +148,34 @@
         champions     (sort-by :name all)
         selection     (get @state :selected)]
     (dom/div
-      (mapv
-        (fn [c]
-          (let [nm (:name c)
-                used? (:used? c)]
+      #_(mapv
+          (fn [c]
+            (let [nm    (:name c)
+                  used? (:used? c)]
 
-            (dom/div {:style   {:color (if :used?
-                                             "grey"
-                                         (if
-                                         (and selection (= nm selection))
+              (dom/div {:style   {:color (if :used?
+                                           "grey"
+                                           (if
+                                             (and selection (= nm selection))
                                              "red" "yellow"))}
-                      :onClick (fn [] (when-not used?
-                                        (swap! state assoc :selected (:name c))))}
-              (get c :name))))
-        champions)
+                        :onClick (fn [] (when-not used?
+                                          (swap! state assoc :selected (:name c))))}
+                (get c :name))))
+          champions)
 
-      (map-indexed
-        (fn [idx c]
-          (dom/div {:onClick (fn []
-                               (let [current (get-in @state [:teamB :bans idx])
-                                     who     (get @state :selected)]
-                                 (if current
-                                   (do
-                                     (swap! state update-in [:teamB :bans] dissoc idx)
-                                     (swap! state clear-champion current))
-                                   (when who
-                                     (swap! state assoc-in [:teamB :bans idx] who)))))}
-            (str "B Banned:" (get-in @state [:teamB :bans idx]))))
-        (range 5))
+      #_(map-indexed
+          (fn [idx c]
+            (dom/div {:onClick (fn []
+                                 (let [current (get-in @state [:teamB :bans idx])
+                                       who     (get @state :selected)]
+                                   (if current
+                                     (do
+                                       (swap! state update-in [:teamB :bans] dissoc idx)
+                                       (swap! state clear-champion current))
+                                     (when who
+                                       (swap! state assoc-in [:teamB :bans idx] who)))))}
+              (str "B Banned:" (get-in @state [:teamB :bans idx]))))
+          (range 5))
 
 
 
@@ -186,10 +195,9 @@
             (dom/div "Team A Picks")
             (ui-pick-list ["1" "2" "3" "4" "5"]))
           (ui-champion-list
-            (mapv (fn [n])
-              (range 200)))
+            champions)
           (dom/div {:style {:color "red"}}
-            (dom/div "Team A Picks")
+            (dom/div "Team B Picks")
             (ui-pick-list ["1" "2" "3" "4" "5"])))
 
 
