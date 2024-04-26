@@ -5,6 +5,30 @@
     [clojure.pprint :refer [pprint]]))
 
 
+
+
+(defn ui-app-state [current-state]
+  ;; HTM
+  (dom/div :.fish.potato.cat {:style {:color "green"}}
+    ;; can write this above as this also:
+    ;; (dom/div {:className "fish potato cat"}
+    ;; using the one stated = can drop all the optional empty maps
+    (dom/hr)
+    ;; HTML: <h5>Your app state is currently:</h5>
+    (dom/h5 "Your app state is currently:")
+    (dom/pre
+      (with-out-str
+        (pprint current-state)))
+    (dom/hr)))
+
+(defn mark-champion [old name]
+  (assoc-in old [:champions name :used?] true))
+
+(defn clear-champion [old name]
+  (assoc-in old [:champions name :used?] false))
+
+
+
 (def champions [{:name  "Annie"
                  :class "Burst Utility Mage"}
                 {:name  "Alistar"
@@ -57,12 +81,13 @@
 (defn ui-ban-list [bans]
   (dom/div
     :.flex {}
-    (mapv
-      (fn [champion]
+    (map-indexed
+      (fn [idx champion]
         (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
           (dom/img {:src   "https://via.placeholder.com/48"
                     :style {:width "100%" :height "100%"}})))
       bans)))
+
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
@@ -83,6 +108,11 @@
                     :width 100
                     })))
       picks)))
+
+
+
+
+
 
 (def scroll-styles
   (dom/style {} "
@@ -108,38 +138,31 @@
       :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
       (mapv
         (fn [champion]
-          (let [nm        (get champion :name)
-                img-url   (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")
-                selected? (get @state [:selected nm] false)]
+          (let [nm      (get champion :name)
+                img-url (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")
+                used?   (get-in @state [:champions nm :used?])
+                opacity (if used? 0.3 1.0)]
             (dom/div :.w-16.h-16.m-4
-              {:style   {:color (if selected? "grey" "black")}
-               :onClick (fn []
-                          (swap! state update-in [:selected nm] not))}
+              {:onClick (fn []
+                          (swap! state update-in [:champions nm :used?] not))}
               (dom/img {:src   img-url                      ; "https://via.placeholder.com/64"
                         :style {:width         "100%" :height "100%"
-                                :border-radius "30%"}}))))
-        list))))
-
-(defn ui-app-state [current-state]
-  ;; HTM
-  (dom/div :.fish.potato.cat {:style {:color "green"}}
-    ;; can write this above as this also:
-    ;; (dom/div {:className "fish potato cat"}
-    ;; using the one stated = can drop all the optional empty maps
-    (dom/hr)
-    ;; HTML: <h5>Your app state is currently:</h5>
-    (dom/h5 "Your app state is currently:")
-    (dom/pre
-      (with-out-str
-        (pprint current-state)))
-    (dom/hr)))
-
-(defn mark-champion [old name]
-  (assoc-in old [:champions name :used?] true))
-
-(defn clear-champion [old name]
-  (assoc-in old [:champions name :used?] false))
-
+                                :border-radius "30%"
+                                :opacity       opacity}}))))
+        list)
+      (map-indexed
+        (fn [idx champion]
+          (dom/div {:onClick (fn []
+                               (let [current (get-in @state [:teamA :bans idx])
+                                     who     (get @state :selected)]
+                                 (if current
+                                   (do
+                                     (swap! state update-in [:teamB :bans] dissoc idx)
+                                     (swaIp! state clear-champion current))
+                                   (when who
+                                     (swap! state assoc-in [:teamA :bans idx] who)))))}
+            (str "A Banned:" (get-in @state [:teamA :bans idx]))))
+        (range 5)))))
 
 
 (defn Root []
@@ -148,34 +171,34 @@
         champions     (sort-by :name all)
         selection     (get @state :selected)]
     (dom/div
-      (mapv
-        (fn [c]
-          (let [nm    (:name c)
-                used? (:used? c)]
+      #_(mapv
+          (fn [c]
+            (let [nm    (:name c)
+                  used? (:used? c)]
 
-            (dom/div {:style   {:color (if :used?
-                                         " "
-                                         (if
-                                           (and selection (= nm selection))
-                                           "red" "yellow"))}
-                      :onClick (fn [] (when-not used?
-                                        (swap! state assoc :selected (:name c))))}
-              (get c :name))))
-        champions)
+              (dom/div {:style   {:color (if :used?
+                                           "pink"
+                                           (if
+                                             (and selection (= nm selection))
+                                             "red" "yellow"))}
+                        :onClick (fn [] (when-not used?
+                                          (swap! state assoc :selected (:name c))))}
+                (get c :name))))
+          champions)
 
-      (map-indexed
-        (fn [idx c]
-          (dom/div {:onClick (fn []
-                               (let [current (get-in @state [:teamB :bans idx])
-                                     who     (get @state :selected)]
-                                 (if current
-                                   (do
-                                     (swap! state update-in [:teamB :bans] dissoc idx)
-                                     (swap! state clear-champion current))
-                                   (when who
-                                     (swap! state assoc-in [:teamB :bans idx] who)))))}
-            (str "B Banned:" (get-in @state [:teamB :bans idx]))))
-        (range 5))
+      #_(map-indexed
+          (fn [idx c]
+            (dom/div {:onClick (fn []
+                                 (let [current (get-in @state [:teamB :bans idx])
+                                       who     (get @state :selected)]
+                                   (if current
+                                     (do
+                                       (swap! state update-in [:teamB :bans] dissoc idx)
+                                       (swap! state clear-champion current))
+                                     (when who
+                                       (swap! state assoc-in [:teamB :bans idx] who)))))}
+              (str "B Banned:" (get-in @state [:teamB :bans idx]))))
+          (range 5))
 
 
 
@@ -184,11 +207,11 @@
         (ui-header-layout
           (dom/div
             (dom/div "Team A")
-            (ui-ban-list ["A" "B" "C" "D" "E"]))
+            (ui-ban-list ["1" "2" "3" "4" "5"]))
           (dom/div "Time Remaining")
           (dom/div
             (dom/div "Team B")
-            (ui-ban-list ["A" "B" "C" "D" "E"])))
+            (ui-ban-list ["1" "2" "3" "4" "5"])))
         (ui-body-layout
           (dom/div {:style {:color "blue"}}
             (dom/div "Team A Picks")
