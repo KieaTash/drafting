@@ -27,6 +27,8 @@
 (defn clear-champion [old name]
   (assoc-in old [:champions name :used?] false))
 
+(defn champion-image-url [nm]
+  (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png"))
 
 
 (def champions [{:name  "Annie"
@@ -47,8 +49,12 @@
                  :class "Bruiser"}])
 (def champions-by-name (zipmap (map :name champions) champions))
 
-(defonce state (atom {:selected  nil
-                      :champions champions-by-name}))
+(defonce state (atom {:selected     nil
+                      :team-a-picks [nil nil nil nil nil]
+                      :team-b-picks [nil nil nil nil nil]
+                      :team-a-bans  [nil nil nil nil nil]
+                      :team-b-bans  [nil nil nil nil nil]
+                      :champions    champions-by-name}))
 
 (defn banned-champions [team]
   (let [c-by-name (get @state champions)
@@ -83,7 +89,8 @@
     :.flex {}
     (map-indexed
       (fn [idx champion]
-        (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
+        (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}
+                                                               :key   idx}
           (dom/img {:src   "https://via.placeholder.com/48"
                     :style {:width "100%" :height "100%"}})))
       bans)))
@@ -91,23 +98,37 @@
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
-    :.flex {:style {:width           "100%"
-                    :justify-content "space-between"
-                    :overflow        "wrap"}}
+    :.flex {:style {:width          "100%"
+                    :justifyContent "space-between"
+                    :overflow       "wrap"}}
     (dom/div :.flex.items-top.ml-8 col1)
     (dom/div :.flex.mt-28.flex-grow-1 col2)
     (dom/div :.flex.items-top.mr-8.ml-1 col3)))
 
-(defn ui-pick-list [picks]
-  (dom/div
-    :.flex-col {}
-    (mapv
-      (fn [champion]
-        (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}}
-          (dom/img {:src   "https://via.placeholder.com/100"
-                    :width 100
-                    })))
-      picks)))
+(defn pick-champion [old-state team-list-name slot-index champion-name]
+  (-> old-state
+    (assoc-in [team-list-name slot-index] champion-name)
+    (assoc :selected nil)
+    (assoc-in [:champions champion-name :used?] true)))
+
+(defn ui-pick-list [team-list-name]
+  (let [picks (get @state team-list-name)]
+    (dom/div
+      :.flex-col {}
+      (map-indexed
+        (fn [idx champion]
+          (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg {:key   idx
+                                                                 :style {:overflow "hidden"}}
+            (if champion
+              (dom/img {:src     (champion-image-url champion)
+                        :onClick (fn [] (swap! state assoc-in [team-list-name idx] nil))
+                        :width   100})
+              (dom/img {:src     "https://via.placeholder.com/100"
+                        :onClick (fn []
+                                   (let [choice (get @state :selected)]
+                                     (swap! state pick-champion team-list-name idx choice)))
+                        :width   100}))))
+        picks))))
 
 
 
@@ -130,39 +151,41 @@
     }"))
 
 (defn ui-champion-list [list]
-  (dom/div
-    {:style {:maxHeight "calc(58vh)",                       ;; Adjust the max-height as needed
-             :overflow  "auto"}}
-    (dom/div scroll-styles)
+  (let [currently-selected (get @state :selected)]
     (dom/div
-      :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
-      (mapv
-        (fn [champion]
-          (let [nm      (get champion :name)
-                img-url (str "https://ddragon.leagueoflegends.com/cdn/12.4.1/img/champion/" nm ".png")
-                used?   (get-in @state [:champions nm :used?])
-                opacity (if used? 0.3 1.0)]
-            (dom/div :.w-16.h-16.m-4
-              {:onClick (fn []
-                          (swap! state update-in [:champions nm :used?] not))}
-              (dom/img {:src   img-url                      ; "https://via.placeholder.com/64"
-                        :style {:width         "100%" :height "100%"
-                                :border-radius "30%"
-                                :opacity       opacity}}))))
-        list)
-      (map-indexed
-        (fn [idx champion]
-          (dom/div {:onClick (fn []
-                               (let [current (get-in @state [:teamA :bans idx])
-                                     who     (get @state :selected)]
-                                 (if current
-                                   (do
-                                     (swap! state update-in [:teamB :bans] dissoc idx)
-                                     (swaIp! state clear-champion current))
-                                   (when who
-                                     (swap! state assoc-in [:teamA :bans idx] who)))))}
-            (str "A Banned:" (get-in @state [:teamA :bans idx]))))
-        (range 5)))))
+      {:style {:maxHeight "calc(58vh)",                     ;; Adjust the max-height as needed
+               :overflow  "auto"}}
+      (dom/div scroll-styles)
+      (dom/div
+        :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
+        (mapv
+          (fn [champion]
+            (let [nm        (get champion :name)
+                  used?     (get-in @state [:champions nm :used?])
+                  selected? (= nm currently-selected)
+                  opacity   (if used? 0.3 1.0)]
+              (dom/div :.w-16.h-16.m-4
+                {:key     nm
+                 :onClick (fn [] (swap! state assoc :selected nm))
+                 :style   {:border (if selected? "2px solid red" "")}}
+                (dom/img {:src   (champion-image-url nm)
+                          :style {:width        "100%" :height "100%"
+                                  :borderRadius "30%"
+                                  :opacity      opacity}}))))
+          list)
+        #_(map-indexed
+            (fn [idx champion]
+              (dom/div {:onClick (fn []
+                                   (let [current (get-in @state [:teamA :bans idx])
+                                         who     (get @state :selected)]
+                                     (if current
+                                       (do
+                                         (swap! state update-in [:teamB :bans] dissoc idx)
+                                         (swap! state clear-champion current))
+                                       (when who
+                                         (swap! state assoc-in [:teamA :bans idx] who)))))}
+                (str "A Banned:" (get-in @state [:teamA :bans idx]))))
+            (range 5))))))
 
 
 (defn Root []
@@ -207,20 +230,20 @@
         (ui-header-layout
           (dom/div
             (dom/div "Team A")
-            (ui-ban-list ["1" "2" "3" "4" "5"]))
+            (ui-ban-list (get @state :team-a-bans)))
           (dom/div "Time Remaining")
           (dom/div
             (dom/div "Team B")
-            (ui-ban-list ["1" "2" "3" "4" "5"])))
+            (ui-ban-list (get @state :team-b-bans))))
         (ui-body-layout
           (dom/div {:style {:color "blue"}}
             (dom/div "Team A Picks")
-            (ui-pick-list ["1" "2" "3" "4" "5"]))
+            (ui-pick-list :team-a-picks))
           (ui-champion-list
             champions)
           (dom/div {:style {:color "red"}}
             (dom/div "Team B Picks")
-            (ui-pick-list ["1" "2" "3" "4" "5"])))
+            (ui-pick-list :team-b-picks)))
 
 
         (ui-app-state current-state)))))
