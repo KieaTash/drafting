@@ -22,6 +22,19 @@
                                  {:name  "Aatrox"
                                   :class "Bruiser"}]}))
 
+(defonce loaded-champions
+  (do
+    (->
+      (js/fetch "https://ddragon.leagueoflegends.com/cdn/12.4.1/data/en_US/champion.json")
+      (.then (fn [response-promise]
+               (-> (.json response-promise)
+                 (.then
+                   (fn [json-promise]
+                     (let [data   (js->clj json-promise :keywordize-keys true)
+                           champs (vals (get data :data))]
+                       (swap! state assoc :champions (zipmap (map :name champs) champs)))))))))
+    true))
+
 (defn ui-button [props label]
   (dom/button
     :.bg-gray-500.hover:bg-gray-600.text-white.font-bold.py-2.px-4.rounded
@@ -81,17 +94,17 @@
 
 (defn ui-champion-list [list]
   (dom/div
-    {:style {:max-height "calc(58vh)", ;; Adjust the max-height as needed
-             :overflow "auto"}}
+    {:style {:max-height "calc(58vh)",                      ;; Adjust the max-height as needed
+             :overflow   "auto"}}
     (dom/div scroll-styles)
     (dom/div
-    :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
-    (mapv
-      (fn [champion]
-        (dom/div :.w-16.h-16.bg-gray-200.m-4.rounded-lg
-          (dom/img {:src   "https://via.placeholder.com/64"
-                    :style {:width "100%" :height "100%"}})))
-      list))))
+      :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
+      (mapv
+        (fn [champion]
+          (dom/div :.w-16.h-16.bg-gray-200.m-4.rounded-lg
+            (dom/img {:src   "https://via.placeholder.com/64"
+                      :style {:width "100%" :height "100%"}})))
+        list))))
 
 (defn ui-app-state [current-state]
   ;; HTM
@@ -128,7 +141,7 @@
           (dom/div "Team A Picks")
           (ui-pick-list ["1" "2" "3" "4" "5"]))
         (ui-champion-list
-          (mapv (fn [n] )
+          (mapv (fn [n])
             (range 200)))
         (dom/div {:style {:color "red"}}
           (dom/div "Team A Picks")
