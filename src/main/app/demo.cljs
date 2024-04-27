@@ -109,7 +109,40 @@
     step3))
 
 
+(defn clear-champion-and-selection [old-state champion team-list-name idx]
+  (let [step1 (clear-champion old-state champion)
+        step2 (assoc-in step1 [team-list-name idx] nil)]
+    step2))
 
+
+
+#_(defn ui-pick-list [team-list-name]
+  (let [picks (get @state team-list-name)]
+    (dom/div
+      :.flex-col {}
+      (map-indexed
+        (fn [idx champion]
+          (dom/div :.w-20.h-20.bg-gray-200.m-2.mt-10.rounded-lg
+            {:key   idx
+             :style {:overflow "hidden"
+                     :opacity  (if (get-in @state [champion :used]) 0.5 1)}}
+            (if champion
+              (dom/img {:src     (champion-image-url champion)
+                        :onClick (fn []
+                                   (swap! state clear-champion-and-selection champion team-list-name idx))
+                        :width   100})
+              (dom/img {:src     "https://via.placeholder.com/100"
+                        :onClick (fn []
+                                   (let [choice (get @state :selected)]
+                                     (swap! state pick-champion team-list-name idx choice)))
+                        :width   100}))))
+        picks))))
+
+
+
+;; this was where I got to + was stuck
+;; had the 2 children with the same key error
+;; + was unintentionally making a new empty champ box in the champion list on every champ removal from a pick list
 (defn ui-pick-list [team-list-name]
   (let [picks (get @state team-list-name)]
     (dom/div
@@ -121,21 +154,19 @@
                                                                          :opacity  (if (get-in @state [champion :used]) 0.5 1)}}
             (if champion
               (when champion
-               (dom/img {:src     (champion-image-url champion)
-                         :onClick (fn []
-                                    (do
-                                      (swap! state clear-champion [:champions champion] team-list-name idx)
-                                      (swap! state assoc-in [:champions champion :used?] false)
-                                      (swap! state assoc-in [team-list-name idx] nil)))
-                         :width   100}))
+                (dom/img {:src     (champion-image-url champion)
+                          :onClick (fn []
+                                     (do
+                                       (swap! state clear-champion [:champions champion] team-list-name idx)
+                                       (swap! state assoc-in [:champions champion :used?] false)
+                                       (swap! state assoc-in [team-list-name idx] nil)))
+                          :width   100}))
               (dom/img {:src     "https://via.placeholder.com/100"
                         :onClick (fn []
                                    (let [choice (get @state :selected)]
                                      (swap! state pick-champion team-list-name idx choice)))
                         :width   100}))))
         picks))))
-
-
 
 
 
