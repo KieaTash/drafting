@@ -116,7 +116,7 @@
 
 
 
-#_(defn ui-pick-list [team-list-name]
+(defn ui-pick-list [team-list-name]
   (let [picks (get @state team-list-name)]
     (dom/div
       :.flex-col {}
@@ -143,7 +143,7 @@
 ;; this was where I got to + was stuck
 ;; had the 2 children with the same key error
 ;; + was unintentionally making a new empty champ box in the champion list on every champ removal from a pick list
-(defn ui-pick-list [team-list-name]
+#_(defn ui-pick-list [team-list-name]
   (let [picks (get @state team-list-name)]
     (dom/div
       :.flex-col {}
