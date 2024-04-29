@@ -1,6 +1,7 @@
 (ns app.demo
   (:require
     [com.fulcrologic.fulcro.dom :as dom]
+    [com.fulcrologic.fulcro.dom.events :as evt]
     ["react-dom" :as react.dom]
     [clojure.pprint :refer [pprint]]))
 
@@ -56,25 +57,16 @@
                       :team-b-picks [nil nil nil nil nil]
                       :champions    champions-by-name}))
 
-(defn banned-champions [team]
-  (let [c-by-name (get @state champions)
-        all       (vals c-by-name)
-        banned    (filterv
-                    (fn [c]
-                      (and
-                        (= team (:team c))
-                        (contains? c :ban)))
-                    all)]
-    (sort-by :ban banned)))
+
 
 
 
 (defn ui-header-layout [col1 col2 col3]
   (dom/div
     :.flex
-    (dom/div :.w-48.flex.items-center.justify-right.text-center.p-8.mr-20 col1)
-    (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center.p-10 col2)
-    (dom/div :.w-48.flex.items-center.justify-center.text-center.p-8.mr-20 col3)))
+    (dom/div :.flex.items-center.justify-right.text-center.p-8.ml-10 col1)
+    (dom/div :.flex-1.flex.items-center.flex-wrap.whitespace-nowrap.justify-center.text-center col2)
+    (dom/div :.flex.items-center.justify-center.text-center.p-8.mr-10 col3)))
 
 
 
@@ -84,7 +76,7 @@
                     :justifyContent "space-between"
                     :overflow       "wrap"}}
     (dom/div :.flex.items-top.ml-8 col1)
-    (dom/div :.flex.mt-28.flex-grow-1 col2)
+    (dom/div :.flex.mt-28 col2)
     (dom/div :.flex.items-top.mr-8.ml-1 col3)))
 
 
@@ -123,6 +115,7 @@
                                      (swap! state pick-champion team-list-name idx choice)))
                         :width   100}))))
         picks))))
+
 
 (defn ui-ban-list [team-list-name]
   (let [bans (get @state team-list-name)]
@@ -195,13 +188,23 @@
       background-color: #555;
     }"))
 
+
+
 (defn ui-champion-list [list]
-  (let [currently-selected (get @state :selected)]
+  (let [currently-selected (get @state :selected)
+        search-term (get @state :search "")
+         ]
 
     (dom/div
       {:style {:maxHeight "calc(58vh)",                     ;; Adjust the max-height as needed
                :overflow  "auto"}}
+
       (dom/div scroll-styles)
+      (dom/input
+        {:style {:color "black"}
+         :value search-term
+         :onChange (fn [e] (swap! state assoc :search (evt/target-value e))
+                     )})
       (dom/div
         :.flex.flex-row.flex-wrap.items-left.justify-center.overflow-x-auto
         (mapv
