@@ -77,20 +77,6 @@
     (dom/div :.w-48.flex.items-center.justify-center.text-center.p-8.mr-20 col3)))
 
 
-(defn ui-ban-list [bans]
-  (dom/div
-    :.flex {}
-    (map-indexed
-      (fn [idx champion]
-        (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg {:style {:overflow "hidden"}
-                                                               :key   idx}
-          (dom/img {:src   "https://via.placeholder.com/48"
-                    :style {:width "100%" :height "100%"}})))
-      bans)))
-
-
-
-
 
 (defn ui-body-layout [col1 col2 col3]
   (dom/div
@@ -137,6 +123,29 @@
                                      (swap! state pick-champion team-list-name idx choice)))
                         :width   100}))))
         picks))))
+
+(defn ui-ban-list [team-list-name]
+  (let [bans (get @state team-list-name)]
+    (dom/div
+      :.flex{}
+      (map-indexed
+        (fn [idx champion]
+          (dom/div :.w-10.h-10.bg-gray-200.m-2.mt-10.rounded-lg
+            {:key   idx
+             :style {:overflow "hidden"
+                     :opacity  (if (get-in @state [champion :used]) 0.5 1)}}
+            (if champion
+              (dom/img {:src     (champion-image-url champion)
+                        :onClick (fn []
+                                   (swap! state clear-champion-and-selection champion team-list-name idx))
+                        :width   100})
+              (dom/img {:src     "https://via.placeholder.com/100"
+                        :onClick (fn []
+                                   (let [choice (get @state :selected)]
+                                     (swap! state pick-champion team-list-name idx choice)))
+                        :width   100}))))
+        bans))))
+
 
 
 
@@ -257,11 +266,11 @@
         (ui-header-layout
           (dom/div
             (dom/div "Team A")
-            (ui-ban-list (get @state :team-a-bans)))
+            (ui-ban-list :team-a-bans))
           (dom/div "Time Remaining")
           (dom/div
             (dom/div "Team B")
-            (ui-ban-list (get @state :team-b-bans))))
+            (ui-ban-list :team-b-bans)))
         (ui-body-layout
           (dom/div {:style {:color "blue"}}
             (dom/div "Team A Picks")
